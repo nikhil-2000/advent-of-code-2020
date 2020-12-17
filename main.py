@@ -256,8 +256,6 @@ def day_9():
 
     print(min(contig_set) + max(contig_set))
 
-
-
 def day_10():
     f = open("data/joltage_adaptors","r")
     adaptors = f.read().split("\n")
@@ -281,7 +279,192 @@ def day_10():
     Create a tree picking 1,2 or 3 each time if available, some type of recursive call I think
     """
 
+def day_10_part_2():
+    f = open("data/joltage_adaptors", "r")
+    adaptors = f.read().split("\n")
+    f.close()
 
-day_10()
+    adaptors = list(map(int, adaptors))
+    sorted_adaptors = sorted(adaptors)
+    sorted_adaptors.insert(0, 0)
+    sorted_adaptors.append(max(adaptors)+3)
+    print(sorted_adaptors)
+
+    all_perms = dynamic_find_permutations(sorted_adaptors,max(sorted_adaptors))
+    print(all_perms)
+
+def day_11():
+    f = open("data/seating_plan.txt","r")
+    seating = f.read().split("\n")
+    seating = [list(row) for row in seating]
+    f.close()
+
+    stable = False
+    before_seating = seating
+    while not stable:
+        new_seating = update_seats(before_seating)
+        stable = before_seating == new_seating
+        before_seating = new_seating
+
+    print(sum(row.count("#") for row in new_seating))
+
+def day_11_p2():
+    f = open("data/seating_plan.txt", "r")
+    seating = f.read().split("\n")
+    seating = [list(row) for row in seating]
+    f.close()
+
+    stable = False
+    before_seating = seating
+    while not stable:
+        new_seating = update_seats_p2(before_seating)
+        stable = before_seating == new_seating
+        before_seating = new_seating
+
+    print(sum(row.count("#") for row in new_seating))
+    print_seating(new_seating)
+
+def day_12():
+    f = open("data/ship_directions.txt")
+    instructions = f.read().split("\n")
+    f.close()
+
+    position = [0,0]
+    direction = 90
+
+    directions = ["N","E","S","W"]
+
+    for instruction in instructions:
+        opcode,operand = instruction[0],int(instruction[1:])
+        if opcode == "F":
+            idx = int(direction/90)
+            opcode = directions[idx]
 
 
+
+        if opcode == "N": position[1] += operand
+        if opcode == "E": position[0] += operand
+        if opcode == "S": position[1] -= operand
+        if opcode == "W": position[0] -= operand
+
+        if opcode == "L": direction -= operand
+        if opcode == "R": direction += operand
+
+        direction = direction % 360
+
+    print(sum([abs(p) for p in position]))
+
+def day_13():
+    import math
+    f = open("data/bus_schedule.txt")
+    f.close()
+    min_departure_time, buses = f.read().split("\n")
+    min_departure_time = int(min_departure_time)
+    buses = [int(id) for id in buses.split(",") if id.isdigit()]
+    best_times = []
+
+    for bus in buses:
+        best_time = math.ceil(min_departure_time/bus) * bus
+        best_times.append(best_time)
+
+    idx = best_times.index(min(best_times))
+    diff = best_times[idx] - min_departure_time
+    print(buses[idx] * diff)
+
+def day_14():
+    f = open("data/day_14.txt")
+    data = f.read().split("\n")
+    f.close()
+
+    mem = {}
+
+    for line in data:
+        lhs,rhs = line.split("=")
+        if "mask" in lhs:
+            mask = rhs.strip()
+
+        if "mem" in lhs:
+            key = lhs.split("[")[1]
+            value = apply_mask(mask, int(rhs))
+            mem[key] = value
+
+    print(mem)
+    print(sum(mem.values()))
+
+def day_14_part_two():
+    f = open("data/day_14.txt")
+    data = f.read().split("\n")
+    f.close()
+
+    mem = {}
+
+    for line in data:
+        lhs, rhs = line.split("=")
+        if "mask" in lhs:
+            mask = rhs.strip()
+
+        if "mem" in lhs:
+            lhs = lhs.replace("[", " ").replace("]", " ")
+            key = lhs.split(" ")[1]
+            keys = apply_mask_2(mask, int(key))
+            value = int(rhs)
+            for k in keys:
+                mem[k] = value
+
+    print(mem)
+    print(sum(mem.values()))
+
+def day_15():
+    import time
+    f = open("data/elves_game.txt")
+    numbers = f.read().split(",")
+    f.close()
+    rounds = list(map(int,numbers))
+    mem = {}
+    for i,k in enumerate(rounds[:-1]): mem[k] = i
+    n_of_rounds = len(rounds)
+    while n_of_rounds < 30000000:
+        last_number = rounds[-1]
+        idx = mem.get(last_number,-1)#find_previous_occurence(last_number,rounds[:-1])
+        if idx == -1:
+            rounds.append(0)
+        else:
+            rounds.append(n_of_rounds - (idx+1))
+
+        mem[last_number] = n_of_rounds - 1
+
+        n_of_rounds = n_of_rounds + 1
+        # print(n_of_rounds,last_number,n_of_rounds-idx-1,mem)
+
+
+    print(rounds[-1])
+
+def day_16():
+    f = open("data/train_tickets.txt")
+    data = f.read()
+
+    rules,rest = data.split("your ticket:")
+    your_ticket,other_tickets = rest.split("nearby tickets:")
+
+
+    rules = rules_dict(remove_empty(rules.split("\n")))
+    all_bounds = []
+    for bounds in rules.values():
+        all_bounds = all_bounds + bounds
+
+
+    your_ticket = convert_to_ticket(your_ticket)
+    other_tickets = remove_empty(other_tickets.split("\n"))
+    other_tickets = list(map(convert_to_ticket,other_tickets))
+
+    invalid_values = []
+    valid_tickets = other_tickets.copy()
+    for ticket in other_tickets:
+        for value in ticket:
+            if not within_bounds(value,all_bounds):
+                invalid_values.append(value)
+                valid_tickets.remove(ticket)
+
+    print(valid_tickets)
+
+day_16()

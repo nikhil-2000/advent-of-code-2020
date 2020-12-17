@@ -76,7 +76,6 @@ def valid_field(key,value):
     elif key == "cid":
         return True
 
-    print(key,value)
     return False
 
 def is_passport_valid(passport):
@@ -195,4 +194,251 @@ def isValid(preamble,number):
 
     return False
 
+def find_permutations_of_adaptors(adaptors,current_perm = [0]):
+    if max(current_perm) == max(adaptors):
+        return (current_perm)
+
+    next_perm_1,next_perm_2,next_perm_3= [],[],[]
+    if current_perm[-1] + 1 in adaptors:
+        next_perm = current_perm +  [current_perm[-1] + 1]
+        next_perm_1 = find_permutations_of_adaptors(adaptors,next_perm)
+
+    if current_perm[-1] + 2 in adaptors:
+        next_perm = current_perm +  [current_perm[-1] + 2]
+        next_perm_2 = find_permutations_of_adaptors(adaptors,next_perm)
+
+    if current_perm[-1] + 3 in adaptors:
+        next_perm = current_perm +  [current_perm[-1] + 3]
+        next_perm_3 = find_permutations_of_adaptors(adaptors,next_perm)
+
+    return next_perm_1 + next_perm_2 + next_perm_3
+
+#W(N) = I(N-1 in A)W(N-1) + I(N-2 in A)W(N-2) + I(N-3 in A)W(N-3)
+#W(1) = 1
+def dynamic_find_permutations(adaptors,n,memory = {}):
+
+    if n < 0:
+        return 0
+    if 0 <= n <= 1:
+        return 1
+
+    if n not in memory.keys():
+        total = 0
+        for i in range(1,4):
+            indicator,ways = int(n-i in adaptors), dynamic_find_permutations(adaptors,n-i)
+            total += indicator * ways
+
+        memory[n] = total
+
+    print(memory)
+
+
+    return memory[n]
+
+def is_seat_occupied(chosen_row, chosen_seat_on_row, seating_arrangement):
+    if seating_arrangement[chosen_row][chosen_seat_on_row] == ".": return None
+
+    w,h = len(seating_arrangement[0]),len(seating_arrangement)
+    occupied_count = 0
+
+    for x in range(-1,2):
+        for y in range(-1,2):
+
+            if 0 <= chosen_seat_on_row +x < w and 0 <= chosen_row +y < h and not (x == 0 and y == 0):
+                seat = seating_arrangement[chosen_row + y][chosen_seat_on_row + x]
+                occupied_count += int(seat == "#")
+
+    if occupied_count >= 4 and seating_arrangement[chosen_row][chosen_seat_on_row] == "#":
+        return False
+    elif occupied_count == 0 and seating_arrangement[chosen_row][chosen_seat_on_row] == "L":
+        return True
+    else:
+        return None
+
+def valid_coord(coords, array_2d):
+    x,y = coords
+    return 0 <= x < len(array_2d) and 0 <= y < len(array_2d[0])
+
+def get_closest_seat(row,col,seating_arrangement,y_dir,x_dir):
+    current_coord = [row + x_dir, col + y_dir]
+    if valid_coord(current_coord,seating_arrangement):
+        seat = seating_arrangement[current_coord[0]][current_coord[1]]
+        while seat == ".":
+            x,y = current_coord
+            current_coord = [x + x_dir, y + y_dir]
+            if not valid_coord(current_coord,seating_arrangement):
+                return "."
+            else:
+                seat = seating_arrangement[current_coord[0]][current_coord[1]]
+        return seat
+
+    return ""
+
+
+def is_seat_occupied_part_2(chosen_row,chosen_seat_on_row, seating_arrangment):
+    left_seat = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, -1, 0)
+    right_seat = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, 1, 0)
+    down_seat = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, 0, 1)
+    up_seat = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, 0, -1)
+
+    l_b_diag = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, -1, 1)
+    r_b_diag = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, 1, 1)
+    l_u_diag = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, 1, -1)
+    r_u_diag = get_closest_seat(chosen_row, chosen_seat_on_row, seating_arrangment, -1, -1)
+
+    visible_seats = [left_seat,right_seat,down_seat,up_seat,l_b_diag,r_b_diag,l_u_diag,r_u_diag]
+    seat = seating_arrangment[chosen_row][chosen_seat_on_row]
+    occupied_count = visible_seats.count("#")
+
+
+    if occupied_count >= 5 and seat == "#":
+        return False
+    elif occupied_count == 0 and seat == "L":
+        return True
+    else:
+        return None
+
+
+def update_seats(seating):
+    before_seating = seating
+    after_seating = [[0 for i in range(len(seating[0]))] for i in range(len(seating))]
+    for y, row in enumerate(seating):
+        for x, col in enumerate(row):
+
+            is_occupied = is_seat_occupied(y, x, before_seating)
+            if is_occupied is None:
+                after_seating[y][x] = before_seating[y][x]
+            elif is_occupied:
+                after_seating[y][x] = "#"
+            elif not is_occupied:
+                after_seating[y][x] = "L"
+
+    return after_seating
+
+def update_seats_p2(seating):
+    before_seating = seating
+    after_seating = [[0 for i in range(len(seating[0]))] for i in range(len(seating))]
+    for y, row in enumerate(seating):
+        for x, col in enumerate(row):
+
+            is_occupied = is_seat_occupied_part_2(y, x, before_seating)
+            if is_occupied is None:
+                after_seating[y][x] = before_seating[y][x]
+            elif is_occupied:
+                after_seating[y][x] = "#"
+            elif not is_occupied:
+                after_seating[y][x] = "L"
+
+    return after_seating
+
+
+def apply_mask(mask,value):
+    value = str(bin(value))[2:]
+    while len(value) < len(mask):
+        value = "0" + value
+
+    value = list(value)
+    for i,bit in enumerate(mask):
+        if bit == "X":
+            pass
+        elif bit == "1":
+            value[i] = "1"
+        elif bit == "0":
+            value[i] = "0"
+
+    final = "".join(value)
+    return int(final,base=2)
+
+def apply_mask_2(mask,key):
+    key = str(bin(key))[2:]
+
+    key = pad(key,len(mask))
+
+    key = list(key)
+    for i, bit in enumerate(mask):
+        if bit == "X":
+            key[i] = "X"
+        elif bit == "1":
+            key[i] = "1"
+        elif bit == "0":
+            pass
+
+    potential_keys = gen_perms(key)
+    return [int(k,base=2) for k in potential_keys]
+
+    # final = "".join(value)
+    # return int(final, base=2)
+
+def pad(s,digits):
+    while len(s) < digits:
+        s = "0" + s
+
+    return s
+
+def insert_bits(key,bits):
+    i = 0
+    new_key = ""
+    for idx,b in enumerate(key):
+        if i < len(bits): current_bit = bits[i]
+        if b == "X":
+            new_key += current_bit
+            i += 1
+        else:
+            new_key += b
+    return new_key
+
+def gen_perms(key):
+    p = key.count("X")
+    n_of_perms = 2**p
+
+    all_bits = [pad(str(bin(n))[2:],p) for n in range(n_of_perms)]
+    perms = [insert_bits(key,bits) for bits in all_bits]
+    return perms
+
+def find_previous_occurence(n, array):
+    i = len(array) - 1
+    while i >= 0:
+        if array[i] == n:
+            return i
+
+        i = i -1
+
+    return i
+
+def print_seating(seating):
+    for r in seating:
+        print(" ".join(r))
+
+def convert_to_compass(opcode,current_direction):
+    if opcode == "F":
+        idx = current_direction/90
+
+def remove_empty(l):
+    return [e for e in l if e.strip() != ""]
+
+def rules_dict(string_rules):
+    rules = {}
+    for str_rule in string_rules:
+        key,values = str_rule.split(":")
+        values = values.split(" or ")
+        bounds = []
+        for bound in values:
+            bound = list(map(int,bound.strip().split("-")))
+            bounds.append(bound)
+
+        rules[key] = bounds
+
+    return rules
+
+def convert_to_ticket(line):
+    return list(map(int,line.replace("\n","").split(",")))
+
+def within_bounds(value,bounds):
+
+    for bound in bounds:
+        l,h = bound
+        if l <= value <= h:
+            return True
+
+    return False
 
